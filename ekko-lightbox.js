@@ -20,6 +20,9 @@ const Lightbox = (($) => {
 			fail: 'Failed to load image:',
 			type: 'Could not detect remote target type. Force the type using data-type',
 		},
+		dataSrc: 'data-remote',
+		titleSrc: 'data-title',
+		footerSrc: 'data-footer',
 		doc: document, // if in an iframe can specify top.document
 		onShow() {},
 		onShown() {},
@@ -268,6 +271,16 @@ const Lightbox = (($) => {
 			return type;
 		}
 
+		_getAttr(element,attr){
+			if(typeof attr === 'function') {
+				return attr.call(element);
+			} else if(0 === attr.toString().indexOf("data-")) {
+				return $(element).data(attr.replace("data-", ""));
+			} else {
+				return $(element).attr(attr);
+			}
+		}
+
 		_isImage(string) {
 			return string && string.match(/(^data:image\/.*,)|(\.(jp(e|g|eg)|gif|png|bmp|webp|svg)((\?|#).*)?$)/i)
 		}
@@ -299,8 +312,9 @@ const Lightbox = (($) => {
 			let $toUse = this._containerToUse()
 			this._updateTitleAndFooter()
 
-			let currentRemote = this._$element.attr('data-remote') || this._$element.attr('href')
-			let currentType = this._detectRemoteType(currentRemote, this._$element.attr('data-type') || false)
+			let currentRemote = this._getAttr(this._$element,this._config.dataSrc) || this._getAttr(this._$element,'href')
+
+			let currentType = this._detectRemoteType(currentRemote, this._getAttr(this._$element,'data-type') || false)
 
 			if(['image', 'youtube', 'vimeo', 'instagram', 'video', 'url'].indexOf(currentType) < 0)
 				return this._error(this._config.strings.type)
@@ -386,8 +400,8 @@ const Lightbox = (($) => {
 		}
 
 		_updateTitleAndFooter() {
-			let title = this._$element.data('title') || ""
-			let caption = this._$element.data('footer') || ""
+			let title = this._getAttr(this._$element,this._config.titleSrc) || ""
+			let caption = this._getAttr(this._$element,this._config.footerSrc) || ""
 
 			this._titleIsShown = false
 			if (title || this._config.alwaysShowClose) {
@@ -520,8 +534,8 @@ const Lightbox = (($) => {
 			if(typeof next == 'undefined')
 				return
 
-			let src = next.attr('data-remote') || next.attr('href')
-			if (next.attr('data-type') === 'image' || this._isImage(src))
+			let src = this._getAttr(next,this._config.dataSrc) || this._getAttr(next,'href')
+			if (this._getAttr(next,'data-type') === 'image' || this._isImage(src))
 				this._preloadImage(src, false)
 
 			if(numberOfTimes > 0)

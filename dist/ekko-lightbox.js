@@ -34,6 +34,9 @@ var Lightbox = (function ($) {
 			fail: 'Failed to load image:',
 			type: 'Could not detect remote target type. Force the type using data-type'
 		},
+		dataSrc: 'data-remote',
+		titleSrc: 'data-title',
+		footerSrc: 'data-footer',
 		doc: document, // if in an iframe can specify top.document
 		onShow: function onShow() {},
 		onShown: function onShown() {},
@@ -262,6 +265,17 @@ var Lightbox = (function ($) {
 				return type;
 			}
 		}, {
+			key: '_getAttr',
+			value: function _getAttr(element, attr) {
+				if (typeof attr === 'function') {
+					return attr.call(element);
+				} else if (0 === attr.toString().indexOf("data-")) {
+					return $(element).data(attr.replace("data-", ""));
+				} else {
+					return $(element).attr(attr);
+				}
+			}
+		}, {
 			key: '_isImage',
 			value: function _isImage(string) {
 				return string && string.match(/(^data:image\/.*,)|(\.(jp(e|g|eg)|gif|png|bmp|webp|svg)((\?|#).*)?$)/i);
@@ -296,8 +310,9 @@ var Lightbox = (function ($) {
 				var $toUse = this._containerToUse();
 				this._updateTitleAndFooter();
 
-				var currentRemote = this._$element.attr('data-remote') || this._$element.attr('href');
-				var currentType = this._detectRemoteType(currentRemote, this._$element.attr('data-type') || false);
+				var currentRemote = this._getAttr(this._$element, this._config.dataSrc) || this._getAttr(this._$element, 'href');
+
+				var currentType = this._detectRemoteType(currentRemote, this._getAttr(this._$element, 'data-type') || false);
 
 				if (['image', 'youtube', 'vimeo', 'instagram', 'video', 'url'].indexOf(currentType) < 0) return this._error(this._config.strings.type);
 
@@ -388,8 +403,8 @@ var Lightbox = (function ($) {
 		}, {
 			key: '_updateTitleAndFooter',
 			value: function _updateTitleAndFooter() {
-				var title = this._$element.data('title') || "";
-				var caption = this._$element.data('footer') || "";
+				var title = this._getAttr(this._$element, this._config.titleSrc) || "";
+				var caption = this._getAttr(this._$element, this._config.footerSrc) || "";
 
 				this._titleIsShown = false;
 				if (title || this._config.alwaysShowClose) {
@@ -519,8 +534,8 @@ var Lightbox = (function ($) {
 				var next = $(this._$galleryItems.get(startIndex), false);
 				if (typeof next == 'undefined') return;
 
-				var src = next.attr('data-remote') || next.attr('href');
-				if (next.attr('data-type') === 'image' || this._isImage(src)) this._preloadImage(src, false);
+				var src = this._getAttr(next, this._config.dataSrc) || this._getAttr(next, 'href');
+				if (this._getAttr(next, 'data-type') === 'image' || this._isImage(src)) this._preloadImage(src, false);
 
 				if (numberOfTimes > 0) return this._preloadImageByIndex(startIndex + 1, numberOfTimes - 1);
 			}
